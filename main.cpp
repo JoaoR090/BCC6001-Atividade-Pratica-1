@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     const auto normalized_closeness_centrality = graph.get_normalized_closeness_centralities();
 
     std::println("\nImprimindo e exportando as excentricidades dos vértices.");
-    print_export_to_txt("eccentricities.txt", eccentricities);
+    print_export_to_txt("eccentricity.txt", eccentricities);
     std::println("\nImprimindo e exportando as centralizades normalizadas dos vértices.");
     print_export_to_txt("closeness_centrality.txt", normalized_closeness_centrality);
     return 0;
