@@ -67,6 +67,8 @@ vcpkg_installed/
 Testing/
 .cache/
 
+.vscode/
+
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
