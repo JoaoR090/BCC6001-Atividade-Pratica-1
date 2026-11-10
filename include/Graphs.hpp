@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <libgexf/libgexf.h>
 #include <filesystem>
+#include <vector>
 
 namespace Graphs {
 
@@ -346,6 +347,98 @@ namespace Graphs {
                 result.emplace_back(vertex, get_normalized_closeness_centrality(vertex));
             }
             
+            return result;
+        }
+
+    private:
+        // Brandes calcula as intermediações de todos os vértices em uma única execução.
+        std::unordered_map<T, double> calculate_betweenness_centralities() const {
+            std::unordered_map<T, double> centralities;
+            centralities.reserve(this->adj.size());
+            for (const auto &[vertex, _]: this->adj) {
+                centralities.emplace(vertex, 0.0);
+            }
+
+            for (const auto &[source, _]: this->adj) {
+                // A BFS encontra as distâncias e conta quantos caminhos mínimos
+                // partem da origem até cada vértice.
+                std::unordered_map<T, size_t> distances;
+                std::unordered_map<T, double> shortest_path_counts;
+                std::unordered_map<T, std::vector<T>> predecessors;
+                std::queue<T> queue;
+                std::vector<T> visit_order;
+
+                distances.emplace(source, 0);
+                shortest_path_counts.emplace(source, 1.0);
+                queue.push(source);
+
+                while (!queue.empty()) {
+                    T current = queue.front();
+                    queue.pop();
+                    visit_order.push_back(current);
+
+                    for (const auto &edge: this->adj.at(current)) {
+                        if (!distances.contains(edge.dest)) {
+                            distances.emplace(edge.dest, distances.at(current) + 1);
+                            queue.push(edge.dest);
+                        }
+
+                        // Cada predecessor contribui com seus caminhos mínimos
+                        // quando está exatamente uma aresta mais perto da origem.
+                        if (distances.at(edge.dest) == distances.at(current) + 1) {
+                            shortest_path_counts[edge.dest] += shortest_path_counts.at(current);
+                            predecessors[edge.dest].push_back(current);
+                        }
+                    }
+                }
+
+                // Percorremos a BFS ao contrário para propagar a dependência:
+                // a parcela de current é proporcional aos caminhos mínimos que passam por ele.
+                std::unordered_map<T, double> dependencies;
+                for (auto vertex = visit_order.rbegin(); vertex != visit_order.rend(); ++vertex) {
+                    const T &current = *vertex;
+                    for (const T &predecessor: predecessors[current]) {
+                        dependencies[predecessor] +=
+                            (shortest_path_counts.at(predecessor) / shortest_path_counts.at(current)) *
+                            (1.0 + dependencies[current]);
+                    }
+
+                    if (current != source) {
+                        centralities.at(current) += dependencies[current];
+                    }
+                }
+            }
+
+            // Em grafo não direcionado, cada par de vértices foi usado como
+            // origem duas vezes; dividir por dois deixa cada par contado uma vez.
+            for (auto &[vertex, centrality]: centralities) {
+                centrality /= 2.0;
+            }
+
+            return centralities;
+        }
+
+    public:
+        // Retorna a intermediação bruta: soma, sobre cada par de vértices,
+        // da fração de seus caminhos mínimos que passa por start.
+        double get_betweenness_centrality(const T &start) const {
+            const auto centralities = calculate_betweenness_centralities();
+            if (const auto it = centralities.find(start); it != centralities.end()) {
+                return it->second;
+            }
+            return 0.0;
+        }
+
+        // Retorna as intermediações brutas de todos os vértices.
+        std::vector<std::pair<T, double>> get_betweenness_centralities() const {
+            const auto centralities = calculate_betweenness_centralities();
+            std::vector<std::pair<T, double>> result;
+            result.reserve(this->adj.size());
+
+            for (const auto &[vertex, _]: this->adj) {
+                result.emplace_back(vertex, centralities.at(vertex));
+            }
+
             return result;
         }
     };

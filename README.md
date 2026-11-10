@@ -73,6 +73,7 @@ Os seguintes conceitos são abordados nesta atividade:
 - Formato GEXF.
 - Excentricidade de vértices.
 - Closeness centrality normalizada.
+- Betweenness centrality (intermediação), calculada sem normalização pelo algoritmo de Brandes.
 - Programação orientada a objetos.
 
 ## Execução

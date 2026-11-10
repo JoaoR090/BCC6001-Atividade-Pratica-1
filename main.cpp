@@ -41,12 +41,9 @@ int main(int argc, char** argv) {
 
     UnDirectedGraph graph = UnDirectedGraph<std::string>(std::filesystem::path(argv[1]));
 
-    const auto eccentricities = graph.get_eccentricities();
-    const auto normalized_closeness_centrality = graph.get_normalized_closeness_centralities();
+    const auto betweenness_centrality = graph.get_betweenness_centralities();
 
-    std::println("\nImprimindo e exportando as excentricidades dos vértices.");
-    print_export_to_txt("eccentricity.txt", eccentricities);
-    std::println("\nImprimindo e exportando as centralizades normalizadas dos vértices.");
-    print_export_to_txt("closeness_centrality.txt", normalized_closeness_centrality);
+    std::println("\nImprimindo e exportando as intermediações dos vértices.");
+    print_export_to_txt("saida.txt", betweenness_centrality);
     return 0;
 }
